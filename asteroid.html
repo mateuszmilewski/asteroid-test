@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Asteroids</title>
+</head>
+
+<body>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <script>
+        /** @type { HTMLConvasElement} */
+
+        const MYFPS = 30; // frames per second
+        const FRICTION = 0.7; // fritction coeffcient of space ( 0 = no friction, 1 = lots of fri)
+        const G_ROIDS_NUM = 3; // staring number of roids.
+        const ROIDS_SPEED = 50; // max pix per sec.
+        const ROIDS_SIZE = 100; // in pix
+        const ROIDS_VERT = 10; // avr num of vertices on each roid
+        const SHIP_SIZE = 30; // ship height in pix
+        const SHIP_THRUST = 5; // acc of statek in pix per sec per sec.
+        const TURN_SPEED = 360; // degrees per sec.
+
+        var kanwas = document.getElementById("gameCanvas");
+        var ctx = kanwas.getContext("2d");
+
+
+
+        var statek = {
+            x: kanwas.width / 2,
+            y: kanwas.height / 2,
+            r: SHIP_SIZE / 2,
+            a: 90 / 180 * Math.PI, // convert to rad - angle statku dziub na polnoc
+            rotacja: 0,
+            thrusting: false,
+            thrust: {
+                x: 0,
+                y: 0
+            }
+        };
+
+        // asteroidy
+        var roids = [];
+
+
+        // setup event handlers
+        document.addEventListener("keydown", myKeyDown);
+        document.addEventListener("keyup", myKeyUp);
+
+        // setup the game loop
+        setInterval(update, 1000 / MYFPS);
+
+
+        function myKeyDown( /** @type {KeyboardEvent}  */ evt) {
+            switch (evt.keyCode) {
+                case 37: // left arrow (rorate statek left)
+                    statek.rotacja = TURN_SPEED / 180 * Math.PI / MYFPS;
+                    break;
+
+                case 38: // up - thrust the ship forward
+                    statek.thrusting = true;
+                    break;
+
+
+                case 39: // right
+                    statek.rotacja = -1 * TURN_SPEED / 180 * Math.PI / MYFPS;
+                    break;
+            }
+        }
+
+        function myKeyUp( /** @type {KeyboardEvent}  */ evt) {
+            switch (evt.keyCode) {
+                case 37: // left arrow (stop rorate statek left)
+                    statek.rotacja = 0; // TURN_SPEED / 180 * Math.PI / MYFPS;
+                    break;
+
+                case 38: // up - thrust the ship forward
+                    statek.thrusting = false;
+                    break;
+
+
+                case 39: // right rotate stop
+                    statek.rotacja = 0; // -1 * TURN_SPEED / 180 * Math.PI / MYFPS;
+                    break;
+            }
+        }
+
+
+        function update() {
+            // draw background (space)
+            ctx.fillStyle = "black";
+            ctx.fillRect(0, 0, kanwas.width, kanwas.height);
+
+            // thrust statek
+            if (statek.thrusting) {
+                statek.thrust.x += SHIP_THRUST * Math.cos(statek.a) / MYFPS;
+                statek.thrust.y -= SHIP_THRUST * Math.sin(statek.a) / MYFPS;
+
+                // draw the thruster
+                drawThruster();
+            } else {
+                statek.thrust.x -= FRICTION * statek.thrust.x / MYFPS;
+                statek.thrust.y -= FRICTION * statek.thrust.y / MYFPS;
+            }
+
+            // draw ship (traingle)
+            ctx.strokeStyle = "white";
+            ctx.lineWidth = SHIP_SIZE / 20;
+            ctx.beginPath();
+            ctx.moveTo(
+
+                // nosek statku
+                statek.x + 4 / 3 * statek.r * Math.cos(statek.a),
+                statek.y - 4 / 3 * statek.r * Math.sin(statek.a)
+            );
+
+            ctx.lineTo(
+
+                // rear-left
+                statek.x - statek.r * (2 / 3 * Math.cos(statek.a) + Math.sin(statek.a)),
+                statek.y + statek.r * (2 / 3 * Math.sin(statek.a) - Math.cos(statek.a))
+            );
+
+            ctx.lineTo(
+
+                // rear-right
+                statek.x - statek.r * (2 / 3 * Math.cos(statek.a) - Math.sin(statek.a)),
+                statek.y + statek.r * (2 / 3 * Math.sin(statek.a) + Math.cos(statek.a))
+            );
+            ctx.closePath();
+            ctx.stroke();
+
+            // rorate ship
+            statek.a += statek.rotacja;
+
+
+            // move ship
+            statek.x += statek.thrust.x;
+            statek.y += statek.thrust.y;
+
+            // handle edge of the screen
+            ///////////////////////////////////////////////////////////
+            if (statek.x < 0 - statek.r) {
+                statek.x = kanwas.width + statek.r;
+            } else if (statek.x > kanwas.width + statek.r) {
+                statek.x = 0 - statek.r
+            }
+
+            if (statek.y < 0 - statek.r) {
+                statek.y = kanwas.height + statek.r;
+            } else if (statek.y > kanwas.height + statek.r) {
+                statek.y = 0 - statek.r
+            }
+            ///////////////////////////////////////////////////////////
+
+
+            // center dot
+            ctx.fillStyle = "red";
+            ctx.fillRect(statek.x - 1, statek.y - 1, 2, 2);
+
+
+
+
+
+            // draw roids 
+            ctx.strokeStyle = "slategrey";
+            ctx.lineWidth = SHIP_SIZE / 20;
+            for (let i = 0; i < roids.length; i++) {
+
+
+                // get properties from roid
+                var x = roids[i].x;
+                var y = roids[i].y;
+                var r = roids[i].r;
+                var a = roids[i].a;
+                var vert = roids[i].vert;
+
+                // draw a path
+                ctx.beginPath();
+                ctx.moveTo(
+                    x + r * Math.cos(a),
+                    y + r * Math.sin(a)
+                );
+
+                for (var j = 0; i < vert; j++) {
+                    ctx.lineTo(
+                        x + r * Math.cos(a + j * Math.PI * 2 / vert),
+                        y + r * Math.sin(a + j * Math.PI * 2 / vert)
+                    );
+                }
+
+                ctx.closePath();
+                ctx.stroke();
+
+
+                // draw polygon
+
+                // move roid
+
+                // handle edge
+            }
+
+        }
+
+
+        function drawThruster() {
+            ctx.fillStyle = "red";
+            ctx.strokeStyle = "yellow";
+            ctx.lineWidth = SHIP_SIZE / 10;
+            ctx.beginPath();
+            ctx.moveTo( // rear left
+
+                statek.x - statek.r * (2 / 3 * Math.cos(statek.a) + 0.3 * Math.sin(statek.a)),
+                statek.y + statek.r * (2 / 3 * Math.sin(statek.a) - 0.3 * Math.cos(statek.a))
+            );
+
+            ctx.lineTo( // behind the ship
+
+                // rear-left
+                statek.x - statek.r * 5 / 3 * Math.cos(statek.a),
+                statek.y + statek.r * 5 / 3 * Math.sin(statek.a)
+            );
+
+            ctx.lineTo(
+
+                // rear-right
+                statek.x - statek.r * (2 / 3 * Math.cos(statek.a) - 0.3 * Math.sin(statek.a)),
+                statek.y + statek.r * (2 / 3 * Math.sin(statek.a) + 0.3 * Math.cos(statek.a))
+            );
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+        }
+
+    </script>
+</body>
+
+</html>
