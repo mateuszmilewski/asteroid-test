@@ -1,4 +1,7 @@
 # asteroid-test
 asteroid-test
 
-[x] simple example with canvas
+> simple example with canvas
+
+- [x] only ship
+- [ ] still no asteroids
