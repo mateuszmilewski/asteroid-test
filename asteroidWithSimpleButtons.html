@@ -4,14 +4,24 @@
 <head>
     <meta charset="UTF-8">
     <title>Asteroids</title>
+
+    <style>
+        .guziki-sterujace {
+            font-size: 50px;
+        }
+
+    </style>
 </head>
 
 <body>
     <canvas id="gameCanvas" width="800" height="600"></canvas>
     <br>
-    <button id="gas-button" onmousedown="thrustByButton()" onmouseup="thrustOffByButton()">GO!</button>
-    <button id="left-button" onmousedown="goLeft()" onmouseup="stopLeft()"> W LEWO!</button>
-    <button id="right-button" onmousedown="goRight()" onmouseup="stopRight()">W PRAWO!</button>
+    <button class="guziki-sterujace" id="gas-button" onmousedown="thrustByButton()" onmouseup="thrustOffByButton()" ontouchstart="thrustByButton()" ontouchend="thrustOffByButton()">GO!</button>
+
+    <button class="guziki-sterujace" id="left-button" onmousedown="goLeft()" onmouseup="stopLeft()" ontouchstart="goLeft()" ontouchend="stopLeft()"> W LEWO!</button>
+
+    <button class="guziki-sterujace" id="right-button" onmousedown="goRight()" onmouseup="stopRight()" ontouchstart="goRight()" ontouchend="stopRight()">W PRAWO!</button>
+
     <script>
         /** @type { HTMLConvasElement} */
 
@@ -69,18 +79,22 @@
 
         function goLeft(evt) {
             statek.rotacja = TURN_SPEED / 180 * Math.PI / MYFPS;
+            statek.thrusting = true;
         }
 
         function stopLeft(evt) {
             statek.rotacja = 0;
+            statek.thrusting = false;
         }
 
         function goRight(evt) {
             statek.rotacja = -1 * TURN_SPEED / 180 * Math.PI / MYFPS;
+            statek.thrusting = true;
         }
 
         function stopRight(evt) {
             statek.rotacja = 0;
+            statek.thrusting = false;
         }
 
 
